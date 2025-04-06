@@ -9,6 +9,20 @@ let customers = JSON.parse(localStorage.getItem("customers")) || [
     phone: "555-1234",
     email: "john@example.com",
   },
+    {
+    id: 2,
+    name: "Emily Johnson",
+    address: "456 Oak Ave, Somewhere",
+    phone: "555-5678",
+    email: "emily@example.com",
+  },
+  {
+    id: 3,
+    name: "Mike Williams",
+    address: "789 Pine Rd, Nowhere",
+    phone: "555-9012",
+    email: "mike@example.com",
+  },
 ];
 
 let products = JSON.parse(localStorage.getItem("products")) || [
