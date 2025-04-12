@@ -1,23 +1,26 @@
 // Data storage
-
+function logout(event) {
+  event.preventDefault(); // stops the link from refreshing
+  window.location.href = "index.html";
+}
 // Initialize with sample data if empty
 let customers = JSON.parse(localStorage.getItem("customers")) || [
   {
-    id: 1,
+    id: 2414,
     name: "John Smith",
     address: "123 Main St, Anytown",
     phone: "555-1234",
     email: "john@example.com",
   },
-    {
-    id: 2,
+  {
+    id: 2415,
     name: "Emily Johnson",
     address: "456 Oak Ave, Somewhere",
     phone: "555-5678",
     email: "emily@example.com",
   },
   {
-    id: 3,
+    id: 2416,
     name: "Mike Williams",
     address: "789 Pine Rd, Nowhere",
     phone: "555-9012",
@@ -66,28 +69,23 @@ let products = JSON.parse(localStorage.getItem("products")) || [
 let deliveries = JSON.parse(localStorage.getItem("deliveries")) || [
   {
     id: 1,
-    status: "Delivered",
-    address: "123 Main St, Anytown",
     courierName: "Fast Delivery",
   },
   {
     id: 2,
-    status: "In Transit",
-    address: "456 Oak Ave, Somewhere",
     courierName: "Quick Ship",
   },
   {
     id: 3,
-    status: "Pending",
-    address: "789 Pine Rd, Nowhere",
-    courierName: "Speedy Couriers",
+    courierName: "Trump deli service",
   },
 ];
 
 let orders = JSON.parse(localStorage.getItem("orders")) || [
   {
     id: 1,
-    customerId: 1,
+    customerId: 2414,
+    address: "123 Main St, Anytown",
     deliveryId: 1,
     date: "2023-05-15",
     paymentMethod: "Credit Card",
@@ -95,7 +93,8 @@ let orders = JSON.parse(localStorage.getItem("orders")) || [
   },
   {
     id: 2,
-    customerId: 2,
+    customerId: 2415,
+    address: "456 Oak Ave, Somewhere",
     deliveryId: 2,
     date: "2023-05-16",
     paymentMethod: "Cash",
@@ -103,7 +102,8 @@ let orders = JSON.parse(localStorage.getItem("orders")) || [
   },
   {
     id: 3,
-    customerId: 3,
+    customerId: 2416,
+    address: "789 Pine Rd, Nowhere",
     deliveryId: 3,
     date: "2023-05-17",
     paymentMethod: "PayPal",
@@ -155,8 +155,11 @@ function openTab(evt, tabName) {
 }
 
 // Generate ID
-function generateId(array) {
-  return array.length > 0 ? Math.max(...array.map((item) => item.id)) + 1 : 1;
+// Generate ID starting from a custom value
+function generateId(array, startFrom = 1000) {
+  return array.length > 0
+    ? Math.max(...array.map((item) => item.id)) + 1
+    : startFrom;
 }
 
 // ========== CUSTOMERS ==========
@@ -166,7 +169,7 @@ document
     e.preventDefault();
     const id = document.getElementById("customerId").value;
     const customer = {
-      id: id ? parseInt(id) : generateId(customers),
+      id: id ? parseInt(id) : generateId(customers, 1000), // Custom starting point
       name: document.getElementById("customerName").value,
       address: document.getElementById("customerAddress").value,
       phone: document.getElementById("customerPhone").value,
@@ -184,8 +187,8 @@ document
 
     localStorage.setItem("customers", JSON.stringify(customers));
     renderCustomers();
-    updateStatistics();
     resetCustomerForm();
+    console.log(customers);
   });
 
 function renderCustomers() {
@@ -333,8 +336,6 @@ document
     const id = document.getElementById("deliveryId").value;
     const delivery = {
       id: id ? parseInt(id) : generateId(deliveries),
-      status: document.getElementById("deliveryStatus").value,
-      address: document.getElementById("deliveryAddress").value,
       courierName: document.getElementById("courierName").value,
     };
 
@@ -361,8 +362,6 @@ function renderDeliveries() {
       (delivery) => `
           <tr>
               <td>${delivery.id}</td>
-              <td>${delivery.status}</td>
-              <td>${delivery.address}</td>
               <td>${delivery.courierName}</td>
               <td>
                   <button onclick="editDelivery(${delivery.id})">Edit</button>
@@ -378,8 +377,6 @@ function editDelivery(id) {
   const delivery = deliveries.find((d) => d.id === id);
   if (delivery) {
     document.getElementById("deliveryId").value = delivery.id;
-    document.getElementById("deliveryStatus").value = delivery.status;
-    document.getElementById("deliveryAddress").value = delivery.address;
     document.getElementById("courierName").value = delivery.courierName;
 
     document.getElementById("deliverySubmit").textContent = "Update Delivery";
@@ -415,6 +412,7 @@ document.getElementById("orderForm").addEventListener("submit", function (e) {
   const order = {
     id: id ? parseInt(id) : generateId(orders),
     customerId: parseInt(document.getElementById("orderCustomerID").value),
+    address: document.getElementById("address").value,
     deliveryId: parseInt(document.getElementById("orderDeliveryID").value),
     date: document.getElementById("orderDate").value,
     paymentMethod: document.getElementById("orderPaymentMethod").value,
@@ -449,7 +447,8 @@ function renderOrders() {
               <td>${customer ? customer.name : "Unknown"} (ID: ${
         order.customerId
       })</td>
-              <td>${delivery ? delivery.status : "Unknown"} (ID: ${
+              <td>${order.address}</td>
+              <td>${delivery ? delivery.courierName : "Unknown"} (ID: ${
         order.deliveryId
       })</td>
               <td>${order.date}</td>
@@ -458,6 +457,9 @@ function renderOrders() {
               <td>
                   <button onclick="editOrder(${order.id})">Edit</button>
                   <button onclick="deleteOrder(${order.id})">Delete</button>
+                  <button onclick="generateReceipt(${
+                    order.id
+                  })">Receipt</button>
               </td>
           </tr>
           `;
@@ -624,7 +626,7 @@ function populateDeliveryDropdown() {
   deliveries.forEach((delivery) => {
     const option = document.createElement("option");
     option.value = delivery.id;
-    option.textContent = `${delivery.status} (ID: ${delivery.id})`;
+    option.textContent = `${delivery.courierName} (ID: ${delivery.id})`;
     select.appendChild(option);
   });
 }
@@ -662,8 +664,6 @@ function renderAll() {
   populateDeliveryDropdown();
   populateOrderDropdown();
   populateProductDropdown();
-
-  updateStatistics(); // Add this line
 }
 
 // Call renderAll when the page loads
@@ -705,3 +705,266 @@ document
       }
     }
   });
+
+// generate reciept
+function generateReceipt(orderId) {
+  const existingModal = document.getElementById("receiptModal");
+  if (existingModal) {
+    existingModal.remove();
+  }
+
+  const order = orders.find((o) => o.id === orderId);
+  if (!order) {
+    alert("Order not found!");
+    return;
+  }
+
+  const customer = customers.find((c) => c.id === order.customerId);
+  const delivery = deliveries.find((d) => d.id === order.deliveryId);
+  const details = orderDetails.filter((od) => od.orderId === orderId);
+
+  // Calculate totals
+  let subtotal = 0;
+  let totalItems = 0;
+  details.forEach((detail) => {
+    subtotal += detail.totalPrice;
+    totalItems += detail.quantity;
+  });
+
+  let receiptHTML = `
+    <div class="receipt-container" style="font-family: Arial, sans-serif; width: 80%; max-width: 800px; margin: 20px auto; padding: 30px; border: 1px solid #ddd; box-shadow: 0 0 15px rgba(0,0,0,0.2); background: white; overflow-y: auto; max-height: 90vh;">
+      <div class="receipt-header" style="text-align: center; margin-bottom: 20px;">
+        <h1 style="color: #4a4a4a; margin-bottom: 5px;">Donut Shop</h1>
+        <p style="color: #777; margin-top: 0;">123 Sweet Street, Donutville</p>
+        <p style="color: #777;">Phone: (555) 123-4567</p>
+        <h2 style="border-top: 2px dashed #ccc; border-bottom: 2px dashed #ccc; padding: 10px 0; margin: 15px 0;">ORDER RECEIPT</h2>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+        <div class="receipt-info" style="flex: 1;">
+          <p><strong>Receipt #:</strong> ${order.id}</p>
+          <p><strong>Date:</strong> ${order.date}</p>
+          <p><strong>Time:</strong> ${new Date().toLocaleTimeString()}</p>
+        </div>
+        <div class="customer-info" style="flex: 1;">
+          <p><strong>Customer:</strong> ${
+            customer ? customer.name : "Unknown"
+          }</p>
+          <p><strong>Phone:</strong> ${customer ? customer.phone : "N/A"}</p>
+          <p><strong>Email:</strong> ${customer ? customer.email : "N/A"}</p>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <p><strong>Delivery Address:</strong> ${order.address}</p>
+        <p><strong>Delivery Service:</strong> ${
+          delivery ? delivery.courierName : "Not specified"
+        }</p>
+        <p><strong>Payment Method:</strong> ${order.paymentMethod}</p>
+        <p><strong>Order Status:</strong> <span style="color: ${
+          order.status === "Completed"
+            ? "green"
+            : order.status === "Processing"
+            ? "orange"
+            : "red"
+        };">${order.status}</span></p>
+      </div>
+
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+        <thead>
+          <tr style="background-color: #f5f5f5; border-bottom: 2px solid #ddd;">
+            <th style="text-align: left; padding: 12px 8px;">Item</th>
+            <th style="text-align: center; padding: 12px 8px;">Description</th>
+            <th style="text-align: right; padding: 12px 8px;">Price</th>
+            <th style="text-align: center; padding: 12px 8px;">Qty</th>
+            <th style="text-align: right; padding: 12px 8px;">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  details.forEach((detail) => {
+    const product = products.find((p) => p.id === detail.productId);
+    const itemPrice = product ? product.price : 0;
+
+    receiptHTML += `
+      <tr style="border-bottom: 1px solid #eee;">
+        <td style="padding: 10px 8px; vertical-align: top;">${
+          product ? product.name : "Unknown Product"
+        }</td>
+        <td style="padding: 10px 8px; text-align: center; vertical-align: top;">${
+          product ? product.description : "N/A"
+        }</td>
+        <td style="padding: 10px 8px; text-align: right; vertical-align: top;">$${itemPrice.toFixed(
+          2
+        )}</td>
+        <td style="padding: 10px 8px; text-align: center; vertical-align: top;">${
+          detail.quantity
+        }</td>
+        <td style="padding: 10px 8px; text-align: right; vertical-align: top;">$${detail.totalPrice.toFixed(
+          2
+        )}</td>
+      </tr>
+    `;
+  });
+
+  receiptHTML += `
+        </tbody>
+      </table>
+
+      <div style="border-top: 2px solid #ddd; padding-top: 15px; margin-top: 20px;">
+        <div style="float: right; width: 300px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <span><strong>Total Items:</strong></span>
+            <span>${totalItems}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <span><strong>Subtotal:</strong></span>
+            <span>$${subtotal.toFixed(2)}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 1.1em;">
+            <span><strong>Total Amount:</strong></span>
+            <span><strong>$${subtotal.toFixed(2)}</strong></span>
+          </div>
+        </div>
+        <div style="clear: both;"></div>
+      </div>
+
+      <div style="margin-top: 30px; text-align: center; font-size: 0.9em; color: #777;">
+        <p>Thank you for your order!</p>
+        <p>Please contact us if you have any questions about your order.</p>
+      </div>
+
+      <div style="text-align: center; margin-top: 30px;">
+        <button onclick="printReceipt()" style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-right: 10px;">
+          <i class="fas fa-print"></i> Print Receipt
+        </button>
+        <button onclick="closeReceipt()" style="padding: 10px 20px; background-color: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;">
+          <i class="fas fa-times"></i> Close
+        </button>
+      </div>
+    </div>
+  `;
+
+  // Create a modal to display the receipt
+  // const modal = document.createElement("div");
+  // modal.id = "receiptModal";
+  // modal.style.position = "fixed";
+  // modal.style.top = "0";
+  // modal.style.left = "0";
+  // modal.style.width = "100%";
+  // modal.style.height = "100vh";
+  // modal.style.backgroundColor = "rgba(0,0,0,0.8)";
+  // modal.style.zIndex = "1000";
+  // modal.style.overflow = "auto";
+  // modal.style.display = "flex";
+  // modal.style.justifyContent = "center";
+  // modal.style.alignItems = "flex-start";
+  // modal.style.padding = "20px 0";
+  // modal.innerHTML = receiptHTML;
+
+  // document.body.appendChild(modal);
+  // document.body.style.overflow = "hidden"; // Prevent scrolling when modal is open
+  const modal = document.createElement("div");
+  modal.id = "receiptModal";
+  modal.style.position = "fixed";
+  modal.style.top = "0";
+  modal.style.left = "0";
+  modal.style.width = "100%";
+  modal.style.height = "100%";
+  modal.style.backgroundColor = "rgba(0,0,0,0.8)";
+  modal.style.zIndex = "1000";
+  modal.style.overflow = "auto"; // Changed from 'hidden' to 'auto'
+
+  // Center container with proper sizing
+  const container = document.createElement("div");
+  container.style.width = "90%";
+  container.style.maxWidth = "800px";
+  container.style.margin = "20px auto"; // Added margin
+  container.style.padding = "20px";
+  container.style.background = "white";
+  container.style.borderRadius = "5px";
+  container.style.boxShadow = "0 0 20px rgba(0,0,0,0.2)";
+  container.innerHTML = receiptHTML;
+
+  modal.appendChild(container);
+  document.body.appendChild(modal);
+  document.body.style.overflow = "hidden";
+}
+function closeReceipt() {
+  const modal = document.getElementById("receiptModal");
+  if (modal) {
+    modal.remove();
+    document.body.style.overflow = "auto"; // Restore scrolling
+  }
+}
+
+function printReceipt() {
+  const receiptContainer = document.querySelector(
+    "#receiptModal .receipt-container"
+  );
+  if (!receiptContainer) return;
+
+  const printContent = receiptContainer.cloneNode(true);
+  const buttons = printContent.querySelectorAll("button");
+  buttons.forEach((button) => button.remove());
+
+  const printWindow = window.open("", "_blank");
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Order Receipt</title>
+        <style>
+          @page {
+            size: auto;
+            margin: 5mm;
+          }
+          body, html {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden !important;
+          }
+          .print-area {
+            page-break-after: always; /* Ensure content stays on one page */
+            page-break-inside: avoid;
+            height: calc(100vh - 10mm); /* Slightly less than full page */
+            overflow: hidden;
+          }
+          .receipt-container {
+            width: 100%;
+            max-width: 80mm;
+            margin: 0 auto;
+            padding: 10px;
+            overflow: visible !important;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+          }
+          th, td {
+            padding: 5px;
+            text-align: left;
+          }
+          th {
+            background-color: #f5f5f5;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="print-area">
+          ${printContent.outerHTML}
+        </div>
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+              window.close();
+            }, 200);
+          }
+        </script>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+}
