@@ -429,9 +429,12 @@ document.getElementById("orderForm").addEventListener("submit", function (e) {
   }
 
   localStorage.setItem("orders", JSON.stringify(orders));
+  updateOrderCount();
   renderOrders();
   populateOrderDropdown();
+  updateOrderCount();
   updateStatistics();
+  updateOrderCount();
   resetOrderForm();
 });
 
@@ -479,6 +482,7 @@ function editOrder(id) {
 
     document.getElementById("orderSubmit").textContent = "Update Order";
     document.getElementById("orderCancel").style.display = "inline-block";
+    updateOrderCount();
   }
 }
 
@@ -489,7 +493,10 @@ function deleteOrder(id) {
     localStorage.setItem("orders", JSON.stringify(orders));
     localStorage.setItem("orderDetails", JSON.stringify(orderDetails));
     renderOrders();
+    updateOrderCount();
     renderOrderDetails();
+    updateOrderCount();
+    updateOrderCount();
   }
 }
 
@@ -536,8 +543,9 @@ document
       // Add new order detail
       orderDetails.push(orderDetail);
     }
-
+    updateOrderCount();
     localStorage.setItem("orderDetails", JSON.stringify(orderDetails));
+    updateOrderCount();
     renderOrderDetails();
     resetOrderDetailForm();
   });
@@ -659,7 +667,7 @@ function renderAll() {
   renderDeliveries();
   renderOrders();
   renderOrderDetails();
-
+  updateOrderCount();
   populateCustomerDropdown();
   populateDeliveryDropdown();
   populateOrderDropdown();
@@ -967,4 +975,21 @@ function printReceipt() {
     </html>
   `);
   printWindow.document.close();
+}
+function updateOrderCount() {
+  const totalOrders = orders.length;
+  const countElement = document.getElementById("orderCount");
+
+  if (countElement) {
+    countElement.textContent = `Total Orders: ${totalOrders}`;
+  } else {
+    // Create the element if it doesn't exist
+    const ordersTab = document.querySelector("#Orders");
+    if (ordersTab) {
+      const countP = document.createElement("p");
+      countP.id = "orderCount";
+      countP.textContent = `Total Orders: ${totalOrders}`;
+      ordersTab.insertBefore(countP, ordersTab.firstChild);
+    }
+  }
 }
